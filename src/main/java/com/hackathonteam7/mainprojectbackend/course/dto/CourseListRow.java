@@ -10,7 +10,7 @@ public record CourseListRow(
         CourseType type,
         CourseStatus status,
         Boolean isOrdered,
-        Long viewCount,
+        Integer viewCount,
         Long placeCount,
         Long rewardId,
         String rewardName,

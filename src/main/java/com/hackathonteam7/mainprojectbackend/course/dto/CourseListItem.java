@@ -9,7 +9,7 @@ public record CourseListItem(
         CourseType type,
         CourseStatus status,
         Boolean isOrdered,
-        Long viewCount,
+        Integer viewCount,
         Long placeCount,
         RewardRef reward,
         Long participants

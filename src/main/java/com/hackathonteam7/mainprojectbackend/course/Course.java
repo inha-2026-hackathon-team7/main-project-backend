@@ -55,8 +55,9 @@ public class Course extends BaseTimeEntity {
     @Column(name = "is_ordered", nullable = false)
     private Boolean isOrdered;
 
+    /** DB 는 INT UNSIGNED (view_count) — BIGINT 가 아니다. */
     @Column(name = "view_count", nullable = false)
-    private Long viewCount;
+    private Integer viewCount;
 
     @Builder
     private Course(Organization organization, User creator, Reward reward, String name, String description,
@@ -69,7 +70,7 @@ public class Course extends BaseTimeEntity {
         this.type = type;
         this.status = status == null ? CourseStatus.DRAFT : status;
         this.isOrdered = isOrdered == null || isOrdered;
-        this.viewCount = 0L;
+        this.viewCount = 0;
     }
 
     public void updateDetails(String name, String description) {

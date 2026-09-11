@@ -12,7 +12,7 @@ public record CourseDetailResponse(
         CourseType type,
         CourseStatus status,
         Boolean isOrdered,
-        Long viewCount,
+        Integer viewCount,
         RewardRef reward,
         List<CoursePlaceItem> places
 ) {

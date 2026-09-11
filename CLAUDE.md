@@ -14,7 +14,7 @@
 | Spring Boot | 3.3.x |
 | 빌드 | Gradle (Kotlin DSL) |
 | 영속성 | Spring Data JPA + Hibernate 6 |
-| DB | PostgreSQL 16 (로컬은 docker-compose, 테스트는 Testcontainers) |
+| DB | MySQL 8.4 LTS (로컬은 docker-compose, 테스트는 Testcontainers) |
 | 마이그레이션 | Flyway (`src/main/resources/db/migration/V1__init.sql`) |
 | 인증 | Spring Security 6 + `io.jsonwebtoken:jjwt-api/impl/jackson` 0.12.x |
 | QR | `com.google.zxing:core` + `javase` |

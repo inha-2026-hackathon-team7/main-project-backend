@@ -15,6 +15,9 @@ public interface CoursePlaceRepository extends JpaRepository<CoursePlace, Long> 
     @Query("select count(distinct cp.course.id) from CoursePlace cp where cp.place.region.id = :regionId")
     long countDistinctCoursesByRegionId(@Param("regionId") Long regionId);
 
+    @Query("select distinct cp.course from CoursePlace cp where cp.place.id = :placeId")
+    List<Course> findDistinctCoursesByPlaceId(@Param("placeId") Long placeId);
+
     @Modifying
     @Query("delete from CoursePlace cp where cp.course.id = :courseId")
     void deleteAllByCourseId(@Param("courseId") Long courseId);

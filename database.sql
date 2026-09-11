@@ -67,6 +67,7 @@ CREATE TABLE courses (
   id                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   organization_id   BIGINT UNSIGNED NOT NULL,
   creator_user_id   BIGINT UNSIGNED NULL,
+  reward_id         BIGINT UNSIGNED NULL,
   name              VARCHAR(100) NOT NULL,
   description       TEXT NULL,
   type              ENUM('official','user','ai') NOT NULL,
@@ -77,6 +78,7 @@ CREATE TABLE courses (
   updated_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_courses_org     FOREIGN KEY (organization_id) REFERENCES organizations(id),
   CONSTRAINT fk_courses_creator FOREIGN KEY (creator_user_id) REFERENCES users(id)
+  CONSTRAINT fk_courses_reward  FOREIGN KEY (reward_id)       REFERENCES rewards(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE course_places (

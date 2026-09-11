@@ -66,8 +66,9 @@ public class Reward extends BaseTimeEntity {
         this.name = name;
     }
 
-    public void restock(int amount) {
-        this.stock += amount;
+    /** PUT /admin/rewards/{id} 의 stock 은 델타가 아니라 새 재고 수량이다 (재고 보충도 이 엔드포인트). */
+    public void changeStock(int stock) {
+        this.stock = stock;
     }
 
     public void changeValidUntil(LocalDateTime validUntil) {

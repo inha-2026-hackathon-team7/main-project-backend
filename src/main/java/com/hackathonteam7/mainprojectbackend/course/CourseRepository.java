@@ -11,4 +11,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Optional<Course> findByIdAndOrganizationId(Long id, Long organizationId);
 
     List<Course> findAllByOrganizationIdAndStatusAndTypeIn(Long organizationId, CourseStatus status, List<CourseType> types);
+
+    List<Course> findAllByRewardId(Long rewardId);
+
+    long countByRewardId(Long rewardId);
 }

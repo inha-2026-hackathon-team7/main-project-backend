@@ -13,4 +13,6 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     Optional<Place> findByIdAndOrganizationId(Long id, Long organizationId);
 
     long countByRegionId(Long regionId);
+
+    List<Place> findAllByRegionId(Long regionId);
 }

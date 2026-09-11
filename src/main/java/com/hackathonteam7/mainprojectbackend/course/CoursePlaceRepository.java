@@ -1,5 +1,6 @@
 package com.hackathonteam7.mainprojectbackend.course;
 
+import com.hackathonteam7.mainprojectbackend.course.dto.CoursePlaceItem;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -12,11 +13,22 @@ public interface CoursePlaceRepository extends JpaRepository<CoursePlace, Long> 
 
     long countByPlaceId(Long placeId);
 
+    long countByCourseId(Long courseId);
+
     @Query("select count(distinct cp.course.id) from CoursePlace cp where cp.place.region.id = :regionId")
     long countDistinctCoursesByRegionId(@Param("regionId") Long regionId);
 
     @Query("select distinct cp.course from CoursePlace cp where cp.place.id = :placeId")
     List<Course> findDistinctCoursesByPlaceId(@Param("placeId") Long placeId);
+
+    @Query("""
+            select new com.hackathonteam7.mainprojectbackend.course.dto.CoursePlaceItem(
+                cp.id, p.id, p.name, cp.visitOrder, p.latitude, p.longitude)
+            from CoursePlace cp join cp.place p
+            where cp.course.id = :courseId
+            order by cp.visitOrder
+            """)
+    List<CoursePlaceItem> findPlaceItemsByCourseId(@Param("courseId") Long courseId);
 
     @Modifying
     @Query("delete from CoursePlace cp where cp.course.id = :courseId")

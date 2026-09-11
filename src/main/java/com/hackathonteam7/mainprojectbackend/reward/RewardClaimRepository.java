@@ -8,4 +8,6 @@ public interface RewardClaimRepository extends JpaRepository<RewardClaim, Long> 
     List<RewardClaim> findAllByUserId(Long userId);
 
     long countByRewardId(Long rewardId);
+
+    long countByCourseEnrollmentCourseId(Long courseId);
 }

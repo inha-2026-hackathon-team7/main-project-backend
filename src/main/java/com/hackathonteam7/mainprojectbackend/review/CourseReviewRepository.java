@@ -9,4 +9,6 @@ public interface CourseReviewRepository extends JpaRepository<CourseReview, Long
     List<CourseReview> findAllByCourseIdOrderByCreatedAtDesc(Long courseId);
 
     Optional<CourseReview> findFirstByCourseIdOrderByCreatedAtDesc(Long courseId);
+
+    boolean existsByCourseId(Long courseId);
 }

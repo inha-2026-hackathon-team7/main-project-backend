@@ -8,8 +8,30 @@ services:
       - 'MYSQL_ROOT_PASSWORD=root'
     ports:
       - '3306'
+    volumes:
+      - 'mysql-data:/var/lib/mysql'
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-uroot', '-proot']
       interval: 5s
       timeout: 5s
       retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - 'SPRING_PROFILES_ACTIVE=prod'
+      - 'DB_URL=jdbc:mysql://mysql:3306/main_project_backend'
+      - 'DB_USERNAME=app'
+      - 'DB_PASSWORD=app'
+      - 'JWT_SECRET=${JWT_SECRET:-local-development-only-secret-key-please-override}'
+      - 'FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:5173}'
+    ports:
+      - '8080:8080'
+
+volumes:
+  mysql-data:

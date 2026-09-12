@@ -12,6 +12,9 @@ public interface CourseEnrollmentRepository extends JpaRepository<CourseEnrollme
 
     Optional<CourseEnrollment> findByCourseIdAndUserId(Long courseId, Long userId);
 
+    Optional<CourseEnrollment> findByCourseIdAndUserIdAndStatus(
+            Long courseId, Long userId, CourseEnrollmentStatus status);
+
     long countByCourseId(Long courseId);
 
     /** 통계용 단일 group-by 쿼리 (CLAUDE.md §5.6). 각 요소는 [CourseEnrollmentStatus, Long count]. */

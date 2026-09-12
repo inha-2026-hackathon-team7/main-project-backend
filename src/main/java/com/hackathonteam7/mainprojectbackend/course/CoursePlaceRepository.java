@@ -4,6 +4,7 @@ import com.hackathonteam7.mainprojectbackend.course.dto.CoursePlaceItem;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCoursePlaceItem;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseThumbnailRow;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 public interface CoursePlaceRepository extends JpaRepository<CoursePlace, Long> {
 
     List<CoursePlace> findAllByCourseIdOrderByVisitOrder(Long courseId);
+
+    Optional<CoursePlace> findByCourseIdAndPlaceId(Long courseId, Long placeId);
 
     long countByPlaceId(Long placeId);
 

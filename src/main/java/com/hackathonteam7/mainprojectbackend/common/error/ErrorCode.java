@@ -24,9 +24,15 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     REGION_NOT_FOUND(HttpStatus.NOT_FOUND, "지역을 찾을 수 없습니다."),
     PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "장소를 찾을 수 없습니다."),
+    QR_PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "QR 코드에 해당하는 장소를 찾을 수 없습니다."),
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "코스를 찾을 수 없습니다."),
     ENROLLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "참가 기록을 찾을 수 없습니다."),
     REWARD_NOT_FOUND(HttpStatus.NOT_FOUND, "리워드를 찾을 수 없습니다."),
+
+    // 422
+    PLACE_NOT_IN_COURSE(HttpStatus.UNPROCESSABLE_CONTENT, "해당 코스에 속하지 않는 장소입니다."),
+    STAMP_OUT_OF_RANGE(HttpStatus.UNPROCESSABLE_CONTENT, "장소의 인증 가능 반경을 벗어났습니다."),
+    STAMP_ORDER_VIOLATION(HttpStatus.UNPROCESSABLE_CONTENT, "정해진 방문 순서와 일치하지 않습니다."),
 
     // 409
     EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
@@ -36,6 +42,8 @@ public enum ErrorCode {
     COURSE_HAS_ENROLLMENTS(HttpStatus.CONFLICT, "참가 기록이 있는 코스는 삭제할 수 없습니다."),
     COURSE_NOT_READY(HttpStatus.CONFLICT, "장소가 등록되지 않은 코스는 시작할 수 없습니다."),
     COURSE_STRUCTURE_LOCKED(HttpStatus.CONFLICT, "참가 기록이 있는 코스의 구성은 변경할 수 없습니다."),
+    ENROLLMENT_NOT_ACTIVE(HttpStatus.CONFLICT, "진행 중인 참가에서만 스탬프를 적립할 수 있습니다."),
+    STAMP_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 인증한 장소입니다."),
     ALREADY_REVIEWED(HttpStatus.CONFLICT, "이미 검수 처리된 코스입니다."),
     DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "다른 데이터와의 무결성 제약을 위반했습니다."),
 

@@ -1,9 +1,11 @@
 package com.hackathonteam7.mainprojectbackend.course;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -15,6 +17,13 @@ public interface CourseEnrollmentRepository extends JpaRepository<CourseEnrollme
 
     @EntityGraph(attributePaths = "course")
     Optional<CourseEnrollment> findByIdAndUserId(Long id, Long userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select ce from CourseEnrollment ce where ce.id = :id and ce.user.id = :userId")
+    Optional<CourseEnrollment> findByIdAndUserIdForUpdate(
+            @Param("id") Long id,
+            @Param("userId") Long userId
+    );
 
     Optional<CourseEnrollment> findByCourseIdAndUserIdAndStatus(
             Long courseId, Long userId, CourseEnrollmentStatus status);

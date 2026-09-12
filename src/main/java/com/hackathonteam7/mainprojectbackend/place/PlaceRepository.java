@@ -12,6 +12,8 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
 
     Optional<Place> findByIdAndOrganizationId(Long id, Long organizationId);
 
+    Optional<Place> findByQrcodeString(String qrcodeString);
+
     long countByRegionId(Long regionId);
 
     List<Place> findAllByRegionId(Long regionId);

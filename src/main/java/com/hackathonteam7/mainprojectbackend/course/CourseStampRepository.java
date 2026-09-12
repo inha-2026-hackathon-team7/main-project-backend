@@ -16,4 +16,8 @@ public interface CourseStampRepository extends JpaRepository<CourseStamp, Long> 
             order by cs.coursePlace.visitOrder, cs.coursePlace.id
             """)
     List<Long> findStampedCoursePlaceIds(@Param("enrollmentId") Long enrollmentId);
+
+    boolean existsByCourseEnrollmentIdAndCoursePlaceId(Long courseEnrollmentId, Long coursePlaceId);
+
+    long countByCourseEnrollmentId(Long courseEnrollmentId);
 }

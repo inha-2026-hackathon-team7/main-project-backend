@@ -2,6 +2,7 @@ package com.hackathonteam7.mainprojectbackend.course;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +12,9 @@ public interface CourseEnrollmentRepository extends JpaRepository<CourseEnrollme
     List<CourseEnrollment> findAllByCourseId(Long courseId);
 
     Optional<CourseEnrollment> findByCourseIdAndUserId(Long courseId, Long userId);
+
+    @EntityGraph(attributePaths = "course")
+    Optional<CourseEnrollment> findByIdAndUserId(Long id, Long userId);
 
     Optional<CourseEnrollment> findByCourseIdAndUserIdAndStatus(
             Long courseId, Long userId, CourseEnrollmentStatus status);

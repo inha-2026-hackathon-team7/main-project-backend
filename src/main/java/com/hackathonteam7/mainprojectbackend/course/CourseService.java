@@ -84,7 +84,11 @@ public class CourseService {
     @Transactional
     public CourseDetailResponse update(Long orgId, Long id, CourseUpdateRequest request,
                                         JsonNullableField<Long> rewardIdPatch) {
-        Course course = getOwned(orgId, id);
+        Course course = getOwnedForUpdate(orgId, id);
+        boolean changesStructure = request.isOrdered() != null || rewardIdPatch.present();
+        if (changesStructure && courseEnrollmentRepository.countByCourseId(id) > 0) {
+            throw new ApiException(ErrorCode.COURSE_STRUCTURE_LOCKED);
+        }
 
         if (request.name() != null || request.description() != null) {
             String name = request.name() != null ? request.name() : course.getName();
@@ -120,7 +124,10 @@ public class CourseService {
 
     @Transactional
     public List<CoursePlaceItem> replacePlaces(Long orgId, Long id, List<CoursePlaceReplaceItem> items) {
-        Course course = getOwned(orgId, id);
+        Course course = getOwnedForUpdate(orgId, id);
+        if (courseEnrollmentRepository.countByCourseId(id) > 0) {
+            throw new ApiException(ErrorCode.COURSE_STRUCTURE_LOCKED);
+        }
 
         List<Long> placeIds = items.stream().map(CoursePlaceReplaceItem::placeId).toList();
 
@@ -243,6 +250,11 @@ public class CourseService {
 
     private Course getOwned(Long orgId, Long id) {
         return courseRepository.findByIdAndOrganizationId(id, orgId)
+                .orElseThrow(() -> new ApiException(ErrorCode.COURSE_NOT_FOUND));
+    }
+
+    private Course getOwnedForUpdate(Long orgId, Long id) {
+        return courseRepository.findByIdAndOrganizationIdForUpdate(id, orgId)
                 .orElseThrow(() -> new ApiException(ErrorCode.COURSE_NOT_FOUND));
     }
 }

@@ -9,6 +9,7 @@ public record UserCourseCreateRequest(
         @NotNull Long organizationId,
         @NotBlank @Size(max = 100) String name,
         String description,
+        @NotNull Boolean isOrdered,
         @NotNull @Size(min = 2, message = "장소는 최소 2개 이상 선택해야 합니다.") List<@NotNull Long> placeIds
 ) {
 }

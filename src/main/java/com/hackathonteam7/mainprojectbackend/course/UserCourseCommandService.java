@@ -52,7 +52,7 @@ public class UserCourseCommandService {
                         .description(request.description())
                         .type(CourseType.USER)
                         .status(CourseStatus.PUBLISHED)
-                        .isOrdered(true)
+                        .isOrdered(request.isOrdered())
                         .build()
         );
 

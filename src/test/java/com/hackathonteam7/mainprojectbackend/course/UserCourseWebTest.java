@@ -138,7 +138,7 @@ class UserCourseWebTest {
         mockMvc.perform(post("/courses")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new UserCourseCreateRequest(1L, "코스", null, List.of(1L, 2L)))))
+                                new UserCourseCreateRequest(1L, "코스", null, true, List.of(1L, 2L)))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
         verifyNoInteractions(commandService);
@@ -153,7 +153,7 @@ class UserCourseWebTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new UserCourseCreateRequest(1L, "성수 코스", "설명", List.of(11L, 12L)))))
+                                new UserCourseCreateRequest(1L, "성수 코스", "설명", true, List.of(11L, 12L)))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(7));
         verify(commandService).create(eq(42L), any());
@@ -167,7 +167,7 @@ class UserCourseWebTest {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new UserCourseCreateRequest(1L, "성수 코스", null, List.of(11L)))))
+                                new UserCourseCreateRequest(1L, "성수 코스", null, true, List.of(11L)))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
         verifyNoInteractions(commandService);

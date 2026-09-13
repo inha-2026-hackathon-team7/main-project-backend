@@ -3,7 +3,6 @@ package com.hackathonteam7.mainprojectbackend.course;
 import com.hackathonteam7.mainprojectbackend.user.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,12 +16,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Getter
 @Entity
-@EntityListeners(AuditingEntityListener.class)
 @Table(
         name = "course_enrollments",
         uniqueConstraints = @UniqueConstraint(name = "uq_course_enrollment", columnNames = {"course_id", "user_id"})
@@ -45,8 +41,11 @@ public class CourseEnrollment {
     @Column(nullable = false, length = 20)
     private CourseEnrollmentStatus status;
 
-    @CreatedDate
-    @Column(name = "started_at", nullable = false, updatable = false)
+    /**
+     * "이번 시도"가 시작된 시각. (course_id, user_id) 가 unique 라 재시작은 새 row 가 아니라
+     * 이 row 를 리셋하는 방식이라서, 최초 생성 시각을 고정하는 @CreatedDate 로 두지 않고 직접 관리한다.
+     */
+    @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
     @Column(name = "completed_at")
@@ -57,6 +56,7 @@ public class CourseEnrollment {
         this.course = course;
         this.user = user;
         this.status = CourseEnrollmentStatus.ACTIVE;
+        this.startedAt = LocalDateTime.now();
     }
 
     public void complete() {
@@ -66,5 +66,12 @@ public class CourseEnrollment {
 
     public void abandon() {
         this.status = CourseEnrollmentStatus.ABANDONED;
+    }
+
+    /** ABANDONED 였던 참가를 새 시도로 리셋한다. 스탬프 삭제는 호출자(서비스)의 책임이다. */
+    public void restart() {
+        this.status = CourseEnrollmentStatus.ACTIVE;
+        this.startedAt = LocalDateTime.now();
+        this.completedAt = null;
     }
 }

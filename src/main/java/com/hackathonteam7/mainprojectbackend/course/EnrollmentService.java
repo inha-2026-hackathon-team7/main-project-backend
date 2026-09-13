@@ -17,6 +17,7 @@ public class EnrollmentService {
     private final CourseRepository courseRepository;
     private final CoursePlaceRepository coursePlaceRepository;
     private final CourseEnrollmentRepository courseEnrollmentRepository;
+    private final CourseStampRepository courseStampRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -24,9 +25,13 @@ public class EnrollmentService {
         Course course = courseRepository.findByIdForUpdate(courseId)
                 .orElseThrow(() -> new ApiException(ErrorCode.COURSE_NOT_FOUND));
 
-        CourseEnrollment existing = courseEnrollmentRepository.findByCourseIdAndUserId(courseId, userId)
+        CourseEnrollment existing = courseEnrollmentRepository.findByCourseIdAndUserIdForUpdate(courseId, userId)
                 .orElse(null);
         if (existing != null) {
+            if (existing.getStatus() == CourseEnrollmentStatus.ABANDONED) {
+                courseStampRepository.deleteAllByCourseEnrollmentId(existing.getId());
+                existing.restart();
+            }
             return new EnrollmentStartResult(EnrollmentStartResponse.from(existing), false);
         }
 

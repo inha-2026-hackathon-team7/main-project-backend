@@ -30,6 +30,7 @@ class EnrollmentServiceTest {
     @Mock CourseRepository courseRepository;
     @Mock CoursePlaceRepository coursePlaceRepository;
     @Mock CourseEnrollmentRepository courseEnrollmentRepository;
+    @Mock CourseStampRepository courseStampRepository;
     @Mock UserRepository userRepository;
     EnrollmentService service;
     Course publishedCourse;
@@ -38,7 +39,7 @@ class EnrollmentServiceTest {
     @BeforeEach
     void setUp() {
         service = new EnrollmentService(
-                courseRepository, coursePlaceRepository, courseEnrollmentRepository, userRepository);
+                courseRepository, coursePlaceRepository, courseEnrollmentRepository, courseStampRepository, userRepository);
         Organization organization = Organization.builder().name("재단").type(OrganizationType.FACILITY).build();
         publishedCourse = Course.builder()
                 .organization(organization)
@@ -55,7 +56,7 @@ class EnrollmentServiceTest {
     @Test
     void createsActiveEnrollmentForPublishedCourseWithPlaces() {
         when(courseRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(publishedCourse));
-        when(courseEnrollmentRepository.findByCourseIdAndUserId(7L, 42L)).thenReturn(Optional.empty());
+        when(courseEnrollmentRepository.findByCourseIdAndUserIdForUpdate(7L, 42L)).thenReturn(Optional.empty());
         when(coursePlaceRepository.countByCourseId(7L)).thenReturn(2L);
         when(userRepository.findById(42L)).thenReturn(Optional.of(user));
         when(courseEnrollmentRepository.save(any())).thenAnswer(invocation -> {
@@ -79,13 +80,31 @@ class EnrollmentServiceTest {
         ReflectionTestUtils.setField(enrollment, "startedAt", LocalDateTime.of(2026, 9, 1, 9, 0));
         enrollment.complete();
         when(courseRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(publishedCourse));
-        when(courseEnrollmentRepository.findByCourseIdAndUserId(7L, 42L)).thenReturn(Optional.of(enrollment));
+        when(courseEnrollmentRepository.findByCourseIdAndUserIdForUpdate(7L, 42L)).thenReturn(Optional.of(enrollment));
 
         var result = service.start(7L, 42L);
 
         assertThat(result.created()).isFalse();
         assertThat(result.response().enrollmentId()).isEqualTo(81L);
         assertThat(result.response().status()).isEqualTo("complete");
+        verify(courseEnrollmentRepository, never()).save(any());
+        verifyNoInteractions(coursePlaceRepository, userRepository, courseStampRepository);
+    }
+
+    @Test
+    void restartsAnAbandonedEnrollmentInPlaceAndClearsOldStamps() {
+        CourseEnrollment enrollment = CourseEnrollment.builder().course(publishedCourse).user(user).build();
+        ReflectionTestUtils.setField(enrollment, "id", 81L);
+        enrollment.abandon();
+        when(courseRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(publishedCourse));
+        when(courseEnrollmentRepository.findByCourseIdAndUserIdForUpdate(7L, 42L)).thenReturn(Optional.of(enrollment));
+
+        var result = service.start(7L, 42L);
+
+        assertThat(result.response().enrollmentId()).isEqualTo(81L);
+        assertThat(result.response().status()).isEqualTo("active");
+        assertThat(enrollment.getCompletedAt()).isNull();
+        verify(courseStampRepository).deleteAllByCourseEnrollmentId(81L);
         verify(courseEnrollmentRepository, never()).save(any());
         verifyNoInteractions(coursePlaceRepository, userRepository);
     }
@@ -100,14 +119,14 @@ class EnrollmentServiceTest {
                 .build();
         ReflectionTestUtils.setField(draft, "id", 8L);
         when(courseRepository.findByIdForUpdate(8L)).thenReturn(Optional.of(draft));
-        when(courseEnrollmentRepository.findByCourseIdAndUserId(8L, 42L)).thenReturn(Optional.empty());
+        when(courseEnrollmentRepository.findByCourseIdAndUserIdForUpdate(8L, 42L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.start(8L, 42L))
                 .isInstanceOfSatisfying(ApiException.class,
                         exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.COURSE_NOT_FOUND));
 
         when(courseRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(publishedCourse));
-        when(courseEnrollmentRepository.findByCourseIdAndUserId(7L, 42L)).thenReturn(Optional.empty());
+        when(courseEnrollmentRepository.findByCourseIdAndUserIdForUpdate(7L, 42L)).thenReturn(Optional.empty());
         when(coursePlaceRepository.countByCourseId(7L)).thenReturn(0L);
 
         assertThatThrownBy(() -> service.start(7L, 42L))

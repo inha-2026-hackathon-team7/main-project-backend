@@ -163,6 +163,57 @@ class EnrollmentIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.code").value("ENROLLMENT_ALREADY_ENDED"));
     }
 
+    @Test
+    void restartingAnAbandonedEnrollmentResetsTheSameRowAndClearsOldStamps() throws Exception {
+        Region region = regionRepository.save(
+                Region.builder().organization(organization).name("재시작 테스트 지역 " + UUID.randomUUID()).build());
+        Place first = place(region, "재시작 테스트 장소1");
+        Place second = place(region, "재시작 테스트 장소2");
+        Course course = courseRepository.save(Course.builder()
+                .organization(organization).name("재시작용 코스").type(CourseType.OFFICIAL)
+                .status(CourseStatus.PUBLISHED).isOrdered(false).build());
+        CoursePlace firstCoursePlace = coursePlaceRepository.save(
+                CoursePlace.builder().course(course).place(first).visitOrder(1).build());
+        coursePlaceRepository.save(CoursePlace.builder().course(course).place(second).visitOrder(2).build());
+        User participant = user("restart-participant");
+        String token = token(participant);
+
+        var started = mockMvc.perform(post("/courses/{courseId}/enrollments", course.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse();
+        long enrollmentId = objectMapper.readTree(started.getContentAsString()).get("enrollment_id").asLong();
+
+        // 포기 전에 한 곳을 스탬프해둔다 (재시작 후 이 기록이 남아있으면 안 된다).
+        CourseEnrollment enrollment = courseEnrollmentRepository.findById(enrollmentId).orElseThrow();
+        courseStampRepository.save(CourseStamp.builder()
+                .courseEnrollment(enrollment).coursePlace(firstCoursePlace).build());
+        assertThat(courseStampRepository.countByCourseEnrollmentId(enrollmentId)).isEqualTo(1);
+
+        mockMvc.perform(post("/enrollments/{id}/abandon", enrollmentId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("abandoned"));
+
+        // 재시작: 같은 코스에 다시 참가하면 같은 enrollment row 가 ACTIVE 로 리셋되고, 이전 스탬프는 지워진다.
+        mockMvc.perform(post("/courses/{courseId}/enrollments", course.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enrollment_id").value(enrollmentId))
+                .andExpect(jsonPath("$.status").value("active"));
+
+        assertThat(courseEnrollmentRepository.findById(enrollmentId).orElseThrow().getStatus())
+                .isEqualTo(CourseEnrollmentStatus.ACTIVE);
+        assertThat(courseEnrollmentRepository.findById(enrollmentId).orElseThrow().getCompletedAt()).isNull();
+        assertThat(courseStampRepository.countByCourseEnrollmentId(enrollmentId)).isZero();
+
+        mockMvc.perform(get("/enrollments/{id}", enrollmentId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stamped_course_place_ids").isEmpty())
+                .andExpect(jsonPath("$.total_places").value(2));
+    }
+
     private Place place(Region region, String name) {
         return placeRepository.save(Place.builder()
                 .organization(organization)

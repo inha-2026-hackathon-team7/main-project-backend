@@ -1,6 +1,7 @@
 package com.hackathonteam7.mainprojectbackend.course;
 
 import com.hackathonteam7.mainprojectbackend.course.dto.CoursePlaceItem;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.CoursePlaceCountRow;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCoursePlaceItem;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseThumbnailRow;
 import java.util.List;
@@ -19,6 +20,15 @@ public interface CoursePlaceRepository extends JpaRepository<CoursePlace, Long> 
     long countByPlaceId(Long placeId);
 
     long countByCourseId(Long courseId);
+
+    @Query("""
+            select new com.hackathonteam7.mainprojectbackend.course.dto.user.CoursePlaceCountRow(
+                cp.course.id, count(cp))
+            from CoursePlace cp
+            where cp.course.id in :courseIds
+            group by cp.course.id
+            """)
+    List<CoursePlaceCountRow> countByCourseIds(@Param("courseIds") List<Long> courseIds);
 
     @Query("select count(distinct cp.course.id) from CoursePlace cp where cp.place.region.id = :regionId")
     long countDistinctCoursesByRegionId(@Param("regionId") Long regionId);

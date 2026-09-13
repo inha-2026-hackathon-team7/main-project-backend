@@ -1,6 +1,7 @@
 package com.hackathonteam7.mainprojectbackend.course;
 
 import jakarta.persistence.LockModeType;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -17,6 +18,10 @@ public interface CourseEnrollmentRepository extends JpaRepository<CourseEnrollme
 
     @EntityGraph(attributePaths = "course")
     Optional<CourseEnrollment> findByIdAndUserId(Long id, Long userId);
+
+    @EntityGraph(attributePaths = "course")
+    List<CourseEnrollment> findAllByUserIdAndStatusInOrderByStartedAtDescIdDesc(
+            Long userId, Collection<CourseEnrollmentStatus> statuses);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select ce from CourseEnrollment ce where ce.id = :id and ce.user.id = :userId")

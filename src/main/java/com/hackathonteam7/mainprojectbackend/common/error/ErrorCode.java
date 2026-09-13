@@ -12,6 +12,7 @@ public enum ErrorCode {
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "요청 값이 올바르지 않습니다."),
     INVALID_VISIT_ORDER(HttpStatus.BAD_REQUEST, "visit_order 는 1부터 N까지 연속된 값이어야 합니다."),
     DUPLICATE_PLACE(HttpStatus.BAD_REQUEST, "동일한 place 가 중복됐습니다."),
+    ENROLLMENT_NOT_COMPLETE(HttpStatus.BAD_REQUEST, "완주한 코스의 리워드만 수령할 수 있습니다."),
 
     // 401
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다."),
@@ -33,6 +34,7 @@ public enum ErrorCode {
     PLACE_NOT_IN_COURSE(HttpStatus.UNPROCESSABLE_CONTENT, "해당 코스에 속하지 않는 장소입니다."),
     STAMP_OUT_OF_RANGE(HttpStatus.UNPROCESSABLE_CONTENT, "장소의 인증 가능 반경을 벗어났습니다."),
     STAMP_ORDER_VIOLATION(HttpStatus.UNPROCESSABLE_CONTENT, "정해진 방문 순서와 일치하지 않습니다."),
+    COURSE_HAS_NO_REWARD(HttpStatus.UNPROCESSABLE_CONTENT, "해당 코스에는 수령할 리워드가 없습니다."),
 
     // 409
     EMAIL_DUPLICATED(HttpStatus.CONFLICT, "이미 가입된 이메일입니다."),
@@ -44,6 +46,8 @@ public enum ErrorCode {
     COURSE_STRUCTURE_LOCKED(HttpStatus.CONFLICT, "참가 기록이 있는 코스의 구성은 변경할 수 없습니다."),
     ENROLLMENT_NOT_ACTIVE(HttpStatus.CONFLICT, "진행 중인 참가에서만 스탬프를 적립할 수 있습니다."),
     STAMP_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 인증한 장소입니다."),
+    REWARD_EXPIRED(HttpStatus.CONFLICT, "수령 기간이 만료된 리워드입니다."),
+    REWARD_OUT_OF_STOCK(HttpStatus.CONFLICT, "리워드 재고가 소진되었습니다."),
     ALREADY_REVIEWED(HttpStatus.CONFLICT, "이미 검수 처리된 코스입니다."),
     DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "다른 데이터와의 무결성 제약을 위반했습니다."),
 

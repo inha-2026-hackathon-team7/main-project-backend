@@ -39,6 +39,7 @@ class UserCourseQueryServiceTest {
     @Mock CourseRepository courseRepository;
     @Mock CoursePlaceRepository coursePlaceRepository;
     @Mock CourseEnrollmentRepository courseEnrollmentRepository;
+    @Mock CourseViewService courseViewService;
     UserCourseQueryService service;
 
     Organization organization;
@@ -49,7 +50,8 @@ class UserCourseQueryServiceTest {
     @BeforeEach
     void setUp() {
         service = new UserCourseQueryService(
-                courseRepository, coursePlaceRepository, courseEnrollmentRepository, new GeoDistancePolicy());
+                courseRepository, coursePlaceRepository, courseEnrollmentRepository,
+                new GeoDistancePolicy(), courseViewService);
         organization = Organization.builder().name("재단").type(OrganizationType.FACILITY).build();
         ReflectionTestUtils.setField(organization, "id", 2L);
         reward = Reward.builder().organization(organization).name("완주 포인트").kind(RewardKind.POINT).stock(100).build();
@@ -121,6 +123,7 @@ class UserCourseQueryServiceTest {
                 thumbnailRow(7L, true, 11L, 1, null)));
         when(courseEnrollmentRepository.findByCourseIdAndUserIdAndStatus(
                 7L, 42L, CourseEnrollmentStatus.ACTIVE)).thenReturn(Optional.of(enrollment));
+        when(courseViewService.recordFirstView(7L, 42L)).thenReturn(true);
         when(courseRepository.increaseViewCount(7L, CourseStatus.PUBLISHED)).thenReturn(1);
 
         var result = service.getDetail(7L, 42L, null, null);
@@ -134,7 +137,21 @@ class UserCourseQueryServiceTest {
     }
 
     @Test
-    void anonymousDetailDoesNotQueryEnrollment() {
+    void repeatViewByTheSameUserDoesNotIncrementCount() {
+        when(courseRepository.findByIdAndStatus(7L, CourseStatus.PUBLISHED)).thenReturn(Optional.of(orderedCourse));
+        when(coursePlaceRepository.findUserPlaceItemsByCourseId(7L)).thenReturn(List.of());
+        when(coursePlaceRepository.findThumbnailRowsByCourseIds(List.of(7L))).thenReturn(List.of());
+        when(courseEnrollmentRepository.findByCourseIdAndUserIdAndStatus(7L, 42L, CourseEnrollmentStatus.ACTIVE))
+                .thenReturn(Optional.empty());
+        when(courseViewService.recordFirstView(7L, 42L)).thenReturn(false);
+
+        service.getDetail(7L, 42L, null, null);
+
+        verify(courseRepository, never()).increaseViewCount(any(), any());
+    }
+
+    @Test
+    void anonymousDetailDoesNotQueryEnrollmentAndAlwaysCounts() {
         when(courseRepository.findByIdAndStatus(7L, CourseStatus.PUBLISHED)).thenReturn(Optional.of(orderedCourse));
         when(coursePlaceRepository.findUserPlaceItemsByCourseId(7L)).thenReturn(List.of());
         when(coursePlaceRepository.findThumbnailRowsByCourseIds(List.of(7L))).thenReturn(List.of());
@@ -144,7 +161,8 @@ class UserCourseQueryServiceTest {
         assertThat(result.myEnrollmentId()).isNull();
         assertThat(result.regionName()).isNull();
         assertThat(result.durationMinutes()).isNull();
-        verifyNoInteractions(courseEnrollmentRepository);
+        verifyNoInteractions(courseEnrollmentRepository, courseViewService);
+        verify(courseRepository).increaseViewCount(7L, CourseStatus.PUBLISHED);
     }
 
     @Test

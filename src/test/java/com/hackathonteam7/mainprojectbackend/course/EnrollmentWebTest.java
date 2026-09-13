@@ -2,6 +2,7 @@ package com.hackathonteam7.mainprojectbackend.course;
 
 import com.hackathonteam7.mainprojectbackend.common.error.GlobalExceptionHandler;
 import com.hackathonteam7.mainprojectbackend.config.SecurityConfig;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentAbandonResponse;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse.EnrollmentCourseSummary;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse.EnrollmentPlaceItem;
@@ -114,6 +115,29 @@ class EnrollmentWebTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
         mockMvc.perform(get("/enrollments/0")
+                        .header("Authorization", "Bearer " + userToken()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+    }
+
+    @Test
+    void abandonReturnsUpdatedStatus() throws Exception {
+        when(enrollmentService.abandon(81L, 42L)).thenReturn(new EnrollmentAbandonResponse(81L, "abandoned"));
+
+        mockMvc.perform(post("/enrollments/81/abandon")
+                        .header("Authorization", "Bearer " + userToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enrollment_id").value(81))
+                .andExpect(jsonPath("$.status").value("abandoned"));
+        verify(enrollmentService).abandon(81L, 42L);
+    }
+
+    @Test
+    void abandonRequiresAuthenticationAndValidId() throws Exception {
+        mockMvc.perform(post("/enrollments/81/abandon"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+        mockMvc.perform(post("/enrollments/0/abandon")
                         .header("Authorization", "Bearer " + userToken()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));

@@ -115,4 +115,49 @@ class EnrollmentServiceTest {
                         exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.COURSE_NOT_READY));
         verify(userRepository, never()).findById(any());
     }
+
+    @Test
+    void abandonsActiveEnrollment() {
+        CourseEnrollment enrollment = CourseEnrollment.builder().course(publishedCourse).user(user).build();
+        ReflectionTestUtils.setField(enrollment, "id", 81L);
+        when(courseEnrollmentRepository.findByIdAndUserIdForUpdate(81L, 42L)).thenReturn(Optional.of(enrollment));
+
+        var result = service.abandon(81L, 42L);
+
+        assertThat(result.enrollmentId()).isEqualTo(81L);
+        assertThat(result.status()).isEqualTo("abandoned");
+    }
+
+    @Test
+    void abandoningAlreadyAbandonedEnrollmentIsIdempotent() {
+        CourseEnrollment enrollment = CourseEnrollment.builder().course(publishedCourse).user(user).build();
+        ReflectionTestUtils.setField(enrollment, "id", 81L);
+        enrollment.abandon();
+        when(courseEnrollmentRepository.findByIdAndUserIdForUpdate(81L, 42L)).thenReturn(Optional.of(enrollment));
+
+        var result = service.abandon(81L, 42L);
+
+        assertThat(result.status()).isEqualTo("abandoned");
+    }
+
+    @Test
+    void cannotAbandonACompletedEnrollment() {
+        CourseEnrollment enrollment = CourseEnrollment.builder().course(publishedCourse).user(user).build();
+        ReflectionTestUtils.setField(enrollment, "id", 81L);
+        enrollment.complete();
+        when(courseEnrollmentRepository.findByIdAndUserIdForUpdate(81L, 42L)).thenReturn(Optional.of(enrollment));
+
+        assertThatThrownBy(() -> service.abandon(81L, 42L))
+                .isInstanceOfSatisfying(ApiException.class,
+                        exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ENROLLMENT_ALREADY_ENDED));
+    }
+
+    @Test
+    void hidesExistenceOfAnotherUsersEnrollmentOnAbandon() {
+        when(courseEnrollmentRepository.findByIdAndUserIdForUpdate(81L, 99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.abandon(81L, 99L))
+                .isInstanceOfSatisfying(ApiException.class,
+                        exception -> assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ENROLLMENT_NOT_FOUND));
+    }
 }

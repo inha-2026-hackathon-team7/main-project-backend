@@ -1,5 +1,6 @@
 package com.hackathonteam7.mainprojectbackend.course;
 
+import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentAbandonResponse;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentStartResponse;
 import com.hackathonteam7.mainprojectbackend.security.PrincipalUser;
@@ -41,5 +42,14 @@ public class EnrollmentController {
             @PathVariable @Positive Long enrollmentId
     ) {
         return enrollmentQueryService.getProgress(enrollmentId, me.userId());
+    }
+
+    @Operation(summary = "코스 참가 포기하기")
+    @PostMapping("/enrollments/{enrollmentId}/abandon")
+    public EnrollmentAbandonResponse abandon(
+            @AuthenticationPrincipal PrincipalUser me,
+            @PathVariable @Positive Long enrollmentId
+    ) {
+        return enrollmentService.abandon(enrollmentId, me.userId());
     }
 }

@@ -126,6 +126,32 @@ class RewardClaimWebTest {
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
     }
 
+    @Test
+    void redeemMarksClaimAsUsed() throws Exception {
+        LocalDateTime claimedAt = LocalDateTime.of(2026, 9, 13, 10, 30);
+        when(rewardClaimService.redeem(42L, 31L))
+                .thenReturn(new RewardClaimResponse(31L, "커피 교환권", "used", claimedAt));
+
+        mockMvc.perform(post("/reward-claims/31/redeem")
+                        .header("Authorization", "Bearer " + userToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.claim_id").value(31))
+                .andExpect(jsonPath("$.status").value("used"));
+        verify(rewardClaimService).redeem(42L, 31L);
+    }
+
+    @Test
+    void redeemRejectsInvalidIdAndRequiresAuthentication() throws Exception {
+        mockMvc.perform(post("/reward-claims/0/redeem")
+                        .header("Authorization", "Bearer " + userToken()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+
+        mockMvc.perform(post("/reward-claims/31/redeem"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
     private String userToken() {
         return jwtTokenProvider.generateAccessToken(42L, "user@example.com", Role.USER, null);
     }

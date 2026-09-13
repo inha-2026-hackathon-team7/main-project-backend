@@ -2,6 +2,7 @@ package com.hackathonteam7.mainprojectbackend.course;
 
 import com.hackathonteam7.mainprojectbackend.common.error.ApiException;
 import com.hackathonteam7.mainprojectbackend.common.error.ErrorCode;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentAbandonResponse;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentStartResponse;
 import com.hackathonteam7.mainprojectbackend.user.User;
 import com.hackathonteam7.mainprojectbackend.user.UserRepository;
@@ -44,5 +45,20 @@ public class EnrollmentService {
     }
 
     public record EnrollmentStartResult(EnrollmentStartResponse response, boolean created) {
+    }
+
+    /** 완주(COMPLETE)한 참가는 포기할 수 없다. 이미 ABANDONED 인 참가는 그대로 재반환한다(멱등). */
+    @Transactional
+    public EnrollmentAbandonResponse abandon(Long enrollmentId, Long userId) {
+        CourseEnrollment enrollment = courseEnrollmentRepository.findByIdAndUserIdForUpdate(enrollmentId, userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.ENROLLMENT_NOT_FOUND));
+
+        if (enrollment.getStatus() == CourseEnrollmentStatus.COMPLETE) {
+            throw new ApiException(ErrorCode.ENROLLMENT_ALREADY_ENDED);
+        }
+        if (enrollment.getStatus() == CourseEnrollmentStatus.ACTIVE) {
+            enrollment.abandon();
+        }
+        return EnrollmentAbandonResponse.from(enrollment);
     }
 }

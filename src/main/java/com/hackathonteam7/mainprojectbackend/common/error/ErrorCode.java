@@ -29,6 +29,7 @@ public enum ErrorCode {
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "코스를 찾을 수 없습니다."),
     ENROLLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "참가 기록을 찾을 수 없습니다."),
     REWARD_NOT_FOUND(HttpStatus.NOT_FOUND, "리워드를 찾을 수 없습니다."),
+    REWARD_CLAIM_NOT_FOUND(HttpStatus.NOT_FOUND, "리워드 수령 기록을 찾을 수 없습니다."),
 
     // 422
     PLACE_NOT_IN_COURSE(HttpStatus.UNPROCESSABLE_CONTENT, "해당 코스에 속하지 않는 장소입니다."),
@@ -48,6 +49,9 @@ public enum ErrorCode {
     STAMP_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 인증한 장소입니다."),
     REWARD_EXPIRED(HttpStatus.CONFLICT, "수령 기간이 만료된 리워드입니다."),
     REWARD_OUT_OF_STOCK(HttpStatus.CONFLICT, "리워드 재고가 소진되었습니다."),
+    REWARD_CLAIM_ALREADY_USED(HttpStatus.CONFLICT, "이미 사용 처리된 리워드입니다."),
+    REWARD_CLAIM_EXPIRED(HttpStatus.CONFLICT, "유효기간이 지나 사용할 수 없는 리워드입니다."),
+    ENROLLMENT_ALREADY_ENDED(HttpStatus.CONFLICT, "이미 완주한 코스는 포기할 수 없습니다."),
     ALREADY_REVIEWED(HttpStatus.CONFLICT, "이미 검수 처리된 코스입니다."),
     DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "다른 데이터와의 무결성 제약을 위반했습니다."),
 

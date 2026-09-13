@@ -176,6 +176,77 @@ class RewardClaimIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void redeemMarksClaimAsUsedAndRejectsSecondRedeem() throws Exception {
+        User participant = user("redeem-success");
+        Reward reward = reward(2, LocalDateTime.now().plusDays(30));
+        CourseEnrollment enrollment = enrollment(participant, course(reward), true);
+        String token = token(participant);
+
+        var claimResponse = mockMvc.perform(post("/reward-claims")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(enrollment.getId())))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse();
+        long claimId = objectMapper.readTree(claimResponse.getContentAsString()).get("claim_id").asLong();
+
+        mockMvc.perform(post("/reward-claims/{claimId}/redeem", claimId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.claim_id").value(claimId))
+                .andExpect(jsonPath("$.status").value("used"));
+        assertThat(rewardClaimRepository.findById(claimId).orElseThrow().getStatus()).isEqualTo("used");
+
+        mockMvc.perform(post("/reward-claims/{claimId}/redeem", claimId)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("REWARD_CLAIM_ALREADY_USED"));
+    }
+
+    @Test
+    void redeemHidesForeignClaimExistence() throws Exception {
+        User participant = user("redeem-owner");
+        User other = user("redeem-stranger");
+        Reward reward = reward(2, LocalDateTime.now().plusDays(30));
+        CourseEnrollment enrollment = enrollment(participant, course(reward), true);
+        String ownerToken = token(participant);
+        String otherToken = token(other);
+
+        var claimResponse = mockMvc.perform(post("/reward-claims")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(enrollment.getId())))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse();
+        long claimId = objectMapper.readTree(claimResponse.getContentAsString()).get("claim_id").asLong();
+
+        mockMvc.perform(post("/reward-claims/{claimId}/redeem", claimId)
+                        .header("Authorization", "Bearer " + otherToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("REWARD_CLAIM_NOT_FOUND"));
+    }
+
+    @Test
+    void redeemRejectsExpiredClaim() throws Exception {
+        User participant = user("redeem-expired");
+        Reward reward = reward(1, LocalDateTime.now().minusDays(1));
+        CourseEnrollment enrollment = enrollment(participant, course(reward), true);
+        RewardClaim claim = rewardClaimRepository.save(RewardClaim.builder()
+                .user(participant)
+                .courseEnrollment(enrollment)
+                .reward(reward)
+                .validUntil(reward.getValidUntil())
+                .build());
+        String token = token(participant);
+
+        mockMvc.perform(post("/reward-claims/{claimId}/redeem", claim.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("REWARD_CLAIM_EXPIRED"));
+        assertThat(rewardClaimRepository.findById(claim.getId()).orElseThrow().getStatus()).isEqualTo("claimed");
+    }
+
+    @Test
     void onlyOneEnrollmentGetsLastStock() throws Exception {
         Reward reward = reward(1, LocalDateTime.now().plusDays(30));
         Course course = course(reward);

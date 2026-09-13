@@ -33,6 +33,7 @@ public class UserCourseQueryService {
     private final CoursePlaceRepository coursePlaceRepository;
     private final CourseEnrollmentRepository courseEnrollmentRepository;
     private final GeoDistancePolicy geoDistancePolicy;
+    private final CourseViewService courseViewService;
 
     public List<UserCourseListItem> list(UserCourseListQuery query, BigDecimal userLatitude, BigDecimal userLongitude) {
         var pageable = PageRequest.of(query.page(), query.size(), Sort.by(Sort.Direction.DESC, "id"));
@@ -78,7 +79,10 @@ public class UserCourseQueryService {
         UserCourseDetailResponse response = UserCourseDetailResponse.from(
                 course, places, enrollmentId, representative, distance, duration);
 
-        if (courseRepository.increaseViewCount(courseId, CourseStatus.PUBLISHED) != 1) {
+        // 로그인 사용자는 (course, user) 당 최초 조회에서만 view_count 를 올린다.
+        // 비로그인 방문은 사용자별로 구분할 방법이 없어 매번 그대로 카운트한다.
+        boolean isFirstView = userId == null || courseViewService.recordFirstView(courseId, userId);
+        if (isFirstView && courseRepository.increaseViewCount(courseId, CourseStatus.PUBLISHED) != 1) {
             throw new ApiException(ErrorCode.COURSE_NOT_FOUND);
         }
         return response;

@@ -100,6 +100,44 @@ class UserCourseIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void repeatedViewByTheSameUserDoesNotDoubleCount() throws Exception {
+        Region region = region("반복조회 지역");
+        Place place = place(region, "반복조회 장소", "repeat.jpg");
+        Course course = course("반복조회 코스", CourseType.OFFICIAL, CourseStatus.PUBLISHED, null, true);
+        coursePlaceRepository.save(CoursePlace.builder().course(course).place(place).visitOrder(1).build());
+        User participant = userRepository.save(User.builder()
+                .name("반복 조회자")
+                .email("repeat-view-" + UUID.randomUUID() + "@example.com")
+                .password(passwordEncoder.encode("password123"))
+                .role(Role.USER)
+                .build());
+        String userToken = jwtTokenProvider.generateAccessToken(
+                participant.getId(), participant.getEmail(), participant.getRole(), null);
+
+        mockMvc.perform(get("/courses/{id}", course.getId()).header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/courses/{id}", course.getId()).header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/courses/{id}", course.getId()).header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isOk());
+
+        assertThat(courseRepository.findById(course.getId()).orElseThrow().getViewCount()).isEqualTo(1);
+    }
+
+    @Test
+    void anonymousViewsAreCountedEveryTimeSinceTheyCannotBeDeduplicated() throws Exception {
+        Region region = region("익명조회 지역");
+        Place place = place(region, "익명조회 장소", "anon.jpg");
+        Course course = course("익명조회 코스", CourseType.OFFICIAL, CourseStatus.PUBLISHED, null, true);
+        coursePlaceRepository.save(CoursePlace.builder().course(course).place(place).visitOrder(1).build());
+
+        mockMvc.perform(get("/courses/{id}", course.getId())).andExpect(status().isOk());
+        mockMvc.perform(get("/courses/{id}", course.getId())).andExpect(status().isOk());
+
+        assertThat(courseRepository.findById(course.getId()).orElseThrow().getViewCount()).isEqualTo(2);
+    }
+
+    @Test
     void draftCourseDetailIsNotExposedAndDoesNotIncreaseViews() throws Exception {
         Course draft = course("초안 코스", CourseType.AI, CourseStatus.DRAFT, null, false);
 

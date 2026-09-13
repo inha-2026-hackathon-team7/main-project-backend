@@ -109,6 +109,60 @@ class EnrollmentIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.code").value("COURSE_STRUCTURE_LOCKED"));
     }
 
+    @Test
+    void abandonEndsActiveEnrollmentButNotACompletedOne() throws Exception {
+        Region region = regionRepository.save(
+                Region.builder().organization(organization).name("포기 테스트 지역 " + UUID.randomUUID()).build());
+        Place onlyPlace = place(region, "포기 테스트 장소");
+        Course activeCourse = courseRepository.save(Course.builder()
+                .organization(organization).name("포기용 코스").type(CourseType.OFFICIAL)
+                .status(CourseStatus.PUBLISHED).isOrdered(false).build());
+        coursePlaceRepository.save(CoursePlace.builder().course(activeCourse).place(onlyPlace).visitOrder(1).build());
+        User participant = user("abandon-participant");
+        User other = user("abandon-other");
+        String participantToken = token(participant);
+
+        var started = mockMvc.perform(post("/courses/{courseId}/enrollments", activeCourse.getId())
+                        .header("Authorization", "Bearer " + participantToken))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse();
+        long enrollmentId = objectMapper.readTree(started.getContentAsString()).get("enrollment_id").asLong();
+
+        mockMvc.perform(post("/enrollments/{id}/abandon", enrollmentId)
+                        .header("Authorization", "Bearer " + token(other)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ENROLLMENT_NOT_FOUND"));
+
+        mockMvc.perform(post("/enrollments/{id}/abandon", enrollmentId)
+                        .header("Authorization", "Bearer " + participantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.enrollment_id").value(enrollmentId))
+                .andExpect(jsonPath("$.status").value("abandoned"));
+        assertThat(courseEnrollmentRepository.findById(enrollmentId).orElseThrow().getStatus())
+                .isEqualTo(CourseEnrollmentStatus.ABANDONED);
+
+        // 이미 포기한 참가를 다시 포기해도 멱등하게 같은 상태를 반환한다.
+        mockMvc.perform(post("/enrollments/{id}/abandon", enrollmentId)
+                        .header("Authorization", "Bearer " + participantToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("abandoned"));
+
+        Course completableCourse = courseRepository.save(Course.builder()
+                .organization(organization).name("완주용 코스").type(CourseType.OFFICIAL)
+                .status(CourseStatus.PUBLISHED).isOrdered(false).build());
+        coursePlaceRepository.save(
+                CoursePlace.builder().course(completableCourse).place(onlyPlace).visitOrder(1).build());
+        CourseEnrollment completedEnrollment = courseEnrollmentRepository.save(
+                CourseEnrollment.builder().course(completableCourse).user(participant).build());
+        completedEnrollment.complete();
+        courseEnrollmentRepository.save(completedEnrollment);
+
+        mockMvc.perform(post("/enrollments/{id}/abandon", completedEnrollment.getId())
+                        .header("Authorization", "Bearer " + participantToken))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("ENROLLMENT_ALREADY_ENDED"));
+    }
+
     private Place place(Region region, String name) {
         return placeRepository.save(Place.builder()
                 .organization(organization)

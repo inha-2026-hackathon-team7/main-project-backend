@@ -59,6 +59,22 @@ public class RewardClaimService {
         return new RewardClaimResult(RewardClaimResponse.from(claim), true);
     }
 
+    @Transactional
+    public RewardClaimResponse redeem(Long userId, Long claimId) {
+        RewardClaim claim = rewardClaimRepository.findByIdAndUserIdForUpdate(claimId, userId)
+                .orElseThrow(() -> new ApiException(ErrorCode.REWARD_CLAIM_NOT_FOUND));
+
+        if ("used".equals(claim.getStatus())) {
+            throw new ApiException(ErrorCode.REWARD_CLAIM_ALREADY_USED);
+        }
+        if (claim.getValidUntil() != null && !claim.getValidUntil().isAfter(LocalDateTime.now())) {
+            throw new ApiException(ErrorCode.REWARD_CLAIM_EXPIRED);
+        }
+
+        claim.changeStatus("used");
+        return RewardClaimResponse.from(claim);
+    }
+
     public record RewardClaimResult(RewardClaimResponse response, boolean created) {
     }
 }

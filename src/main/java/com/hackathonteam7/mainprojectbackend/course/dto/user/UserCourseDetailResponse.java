@@ -11,11 +11,21 @@ public record UserCourseDetailResponse(
         Boolean isOrdered,
         List<UserCoursePlaceItem> places,
         UserCourseRewardDetail reward,
-        @JsonInclude(JsonInclude.Include.NON_NULL) Long myEnrollmentId
+        @JsonInclude(JsonInclude.Include.NON_NULL) Long myEnrollmentId,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Long regionId,
+        @JsonInclude(JsonInclude.Include.NON_NULL) String regionName,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Double distanceMeters,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer durationMinutes
 ) {
 
     public static UserCourseDetailResponse from(
-            Course course, List<UserCoursePlaceItem> places, Long myEnrollmentId) {
+            Course course,
+            List<UserCoursePlaceItem> places,
+            Long myEnrollmentId,
+            UserCourseThumbnailRow representativePlace,
+            Double distanceMeters,
+            Integer durationMinutes
+    ) {
         return new UserCourseDetailResponse(
                 course.getId(),
                 course.getName(),
@@ -23,7 +33,11 @@ public record UserCourseDetailResponse(
                 course.getIsOrdered(),
                 places,
                 UserCourseRewardDetail.from(course.getReward()),
-                myEnrollmentId
+                myEnrollmentId,
+                representativePlace == null ? null : representativePlace.regionId(),
+                representativePlace == null ? null : representativePlace.regionName(),
+                distanceMeters,
+                durationMinutes
         );
     }
 }

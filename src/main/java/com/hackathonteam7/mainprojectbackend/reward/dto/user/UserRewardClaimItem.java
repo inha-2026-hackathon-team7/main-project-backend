@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 public record UserRewardClaimItem(
         Long claimId,
+        Long courseId,
+        String courseTitle,
         String rewardName,
         String imageUrl,
         String status,
@@ -20,6 +22,8 @@ public record UserRewardClaimItem(
         }
         return new UserRewardClaimItem(
                 claim.getId(),
+                claim.getCourseEnrollment().getCourse().getId(),
+                claim.getCourseEnrollment().getCourse().getName(),
                 claim.getReward().getName(),
                 claim.getReward().getImageUrl(),
                 effectiveStatus,

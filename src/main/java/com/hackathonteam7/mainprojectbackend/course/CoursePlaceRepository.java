@@ -47,7 +47,7 @@ public interface CoursePlaceRepository extends JpaRepository<CoursePlace, Long> 
 
     @Query("""
             select new com.hackathonteam7.mainprojectbackend.course.dto.user.UserCoursePlaceItem(
-                cp.id, p.id, p.name, p.latitude, p.longitude, cp.visitOrder, p.imageUrl)
+                cp.id, p.id, p.name, p.latitude, p.longitude, cp.visitOrder, p.imageUrl, p.description)
             from CoursePlace cp join cp.place p
             where cp.course.id = :courseId
             order by cp.visitOrder, cp.id
@@ -56,8 +56,8 @@ public interface CoursePlaceRepository extends JpaRepository<CoursePlace, Long> 
 
     @Query("""
             select new com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseThumbnailRow(
-                c.id, c.isOrdered, cp.id, cp.visitOrder, p.imageUrl)
-            from CoursePlace cp join cp.course c join cp.place p
+                c.id, c.isOrdered, cp.id, cp.visitOrder, p.imageUrl, r.id, r.name, p.latitude, p.longitude)
+            from CoursePlace cp join cp.course c join cp.place p join p.region r
             where c.id in :courseIds
             order by c.id, cp.visitOrder, cp.id
             """)

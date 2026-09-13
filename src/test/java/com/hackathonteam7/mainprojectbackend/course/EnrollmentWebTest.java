@@ -3,8 +3,11 @@ package com.hackathonteam7.mainprojectbackend.course;
 import com.hackathonteam7.mainprojectbackend.common.error.GlobalExceptionHandler;
 import com.hackathonteam7.mainprojectbackend.config.SecurityConfig;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse.EnrollmentCourseSummary;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse.EnrollmentPlaceItem;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentStartResponse;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCoursePlaceItem;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseRewardDetail;
 import com.hackathonteam7.mainprojectbackend.security.JwtAuthenticationFilter;
 import com.hackathonteam7.mainprojectbackend.security.JwtTokenProvider;
 import com.hackathonteam7.mainprojectbackend.user.Role;
@@ -71,9 +74,16 @@ class EnrollmentWebTest {
     void progressReturnsDocumentedFieldsAndReusesCoursePlaceShapeForNextPlace() throws Exception {
         UserCoursePlaceItem nextPlace = new UserCoursePlaceItem(
                 12L, 102L, "두 번째 장소", new BigDecimal("37.1234567"),
-                new BigDecimal("127.1234567"), 2, "place.jpg");
+                new BigDecimal("127.1234567"), 2, "place.jpg", "설명");
+        EnrollmentCourseSummary course = new EnrollmentCourseSummary(7L, "성수 코스", true);
+        List<EnrollmentPlaceItem> places = List.of(
+                new EnrollmentPlaceItem(11L, 101L, "첫 번째 장소", BigDecimal.ONE, BigDecimal.TEN, 1, null, null, true),
+                new EnrollmentPlaceItem(12L, 102L, "두 번째 장소", new BigDecimal("37.1234567"),
+                        new BigDecimal("127.1234567"), 2, "place.jpg", "설명", false));
+        UserCourseRewardDetail reward = new UserCourseRewardDetail(
+                3L, "완주 포인트", "point", "설명", null, 100, null);
         when(enrollmentQueryService.getProgress(81L, 42L)).thenReturn(new EnrollmentProgressResponse(
-                "active", List.of(11L), 3, nextPlace, null));
+                "active", List.of(11L), 3, nextPlace, null, course, places, reward));
 
         var response = mockMvc.perform(get("/enrollments/81")
                         .header("Authorization", "Bearer " + userToken()))
@@ -84,9 +94,14 @@ class EnrollmentWebTest {
                 .andExpect(jsonPath("$.next_place.course_place_id").value(12))
                 .andExpect(jsonPath("$.next_place.visit_order").value(2))
                 .andExpect(jsonPath("$.completed_at").doesNotExist())
+                .andExpect(jsonPath("$.course.id").value(7))
+                .andExpect(jsonPath("$.course.name").value("성수 코스"))
+                .andExpect(jsonPath("$.places[0].stamped").value(true))
+                .andExpect(jsonPath("$.places[1].stamped").value(false))
+                .andExpect(jsonPath("$.reward.kind").value("point"))
                 .andReturn().getResponse();
 
-        assertThat(objectMapper.readTree(response.getContentAsString()).size()).isEqualTo(4);
+        assertThat(objectMapper.readTree(response.getContentAsString()).size()).isEqualTo(7);
         verify(enrollmentQueryService).getProgress(81L, 42L);
     }
 

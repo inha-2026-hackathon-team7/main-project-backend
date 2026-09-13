@@ -10,6 +10,7 @@ public record PlaceResponse(
         BigDecimal latitude,
         BigDecimal longitude,
         String category,
+        String description,
         String imageUrl,
         String qrcodeString
 ) {
@@ -21,6 +22,7 @@ public record PlaceResponse(
                 place.getLatitude(),
                 place.getLongitude(),
                 place.getCategory(),
+                place.getDescription(),
                 place.getImageUrl(),
                 place.getQrcodeString()
         );

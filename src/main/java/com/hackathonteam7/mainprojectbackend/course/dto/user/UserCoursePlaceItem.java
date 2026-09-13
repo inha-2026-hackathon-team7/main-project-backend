@@ -9,6 +9,7 @@ public record UserCoursePlaceItem(
         BigDecimal lat,
         BigDecimal lng,
         Integer visitOrder,
-        String imageUrl
+        String imageUrl,
+        String description
 ) {
 }

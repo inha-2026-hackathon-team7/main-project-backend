@@ -66,6 +66,12 @@ class EnrollmentQueryServiceTest {
         assertThat(result.totalPlaces()).isEqualTo(3);
         assertThat(result.nextPlace()).isEqualTo(second);
         assertThat(result.completedAt()).isNull();
+        assertThat(result.course().id()).isEqualTo(7L);
+        assertThat(result.course().name()).isEqualTo("순서 코스");
+        assertThat(result.places()).hasSize(3);
+        assertThat(result.places().get(0).stamped()).isTrue();
+        assertThat(result.places().get(1).stamped()).isFalse();
+        assertThat(result.reward()).isNull();
     }
 
     @Test
@@ -86,6 +92,7 @@ class EnrollmentQueryServiceTest {
                 BigDecimal.ONE,
                 BigDecimal.TEN,
                 order,
+                null,
                 null
         );
     }

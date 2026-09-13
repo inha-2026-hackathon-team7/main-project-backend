@@ -83,12 +83,14 @@ class RewardClaimWebTest {
         LocalDateTime validUntil = LocalDateTime.of(2026, 10, 31, 23, 59, 59);
         when(rewardClaimQueryService.list(42L)).thenReturn(List.of(
                 new UserRewardClaimItem(
-                        31L, "커피 교환권", "reward.jpg", "claimed", validUntil, claimedAt)));
+                        31L, 9L, "성수 로컬 크래프트 투어", "커피 교환권", "reward.jpg", "claimed", validUntil, claimedAt)));
 
         var response = mockMvc.perform(get("/users/me/reward-claims")
                         .header("Authorization", "Bearer " + userToken()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].claim_id").value(31))
+                .andExpect(jsonPath("$[0].course_id").value(9))
+                .andExpect(jsonPath("$[0].course_title").value("성수 로컬 크래프트 투어"))
                 .andExpect(jsonPath("$[0].reward_name").value("커피 교환권"))
                 .andExpect(jsonPath("$[0].image_url").value("reward.jpg"))
                 .andExpect(jsonPath("$[0].status").value("claimed"))
@@ -96,7 +98,7 @@ class RewardClaimWebTest {
                 .andExpect(jsonPath("$[0].claimed_at").value("2026-09-13T10:30:00"))
                 .andReturn().getResponse();
 
-        assertThat(objectMapper.readTree(response.getContentAsString()).get(0).size()).isEqualTo(6);
+        assertThat(objectMapper.readTree(response.getContentAsString()).get(0).size()).isEqualTo(8);
         verify(rewardClaimQueryService).list(42L);
     }
 

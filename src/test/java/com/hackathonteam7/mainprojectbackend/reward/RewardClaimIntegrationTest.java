@@ -70,6 +70,8 @@ class RewardClaimIntegrationTest extends IntegrationTestSupport {
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].claim_id").value(claimId))
+                .andExpect(jsonPath("$[0].course_id").value(enrollment.getCourse().getId()))
+                .andExpect(jsonPath("$[0].course_title").value(enrollment.getCourse().getName()))
                 .andExpect(jsonPath("$[0].reward_name").value("완주 리워드"))
                 .andExpect(jsonPath("$[0].image_url").value("reward.jpg"))
                 .andExpect(jsonPath("$[0].status").value("claimed"))

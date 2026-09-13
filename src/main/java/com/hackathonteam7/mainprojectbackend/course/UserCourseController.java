@@ -6,9 +6,12 @@ import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseListQuery
 import com.hackathonteam7.mainprojectbackend.security.PrincipalUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,9 +38,11 @@ public class UserCourseController {
             @RequestParam(name = "region_id", required = false) @Positive Long regionId,
             @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(required = false) @DecimalMin("-90") @DecimalMax("90") BigDecimal lat,
+            @RequestParam(required = false) @DecimalMin("-180") @DecimalMax("180") BigDecimal lng
     ) {
-        return userCourseQueryService.list(UserCourseListQuery.of(organizationId, regionId, type, page, size));
+        return userCourseQueryService.list(UserCourseListQuery.of(organizationId, regionId, type, page, size), lat, lng);
     }
 
     @Operation(summary = "공개 코스 상세 조회")
@@ -45,8 +50,10 @@ public class UserCourseController {
     @GetMapping("/{courseId}")
     public UserCourseDetailResponse getDetail(
             @AuthenticationPrincipal PrincipalUser me,
-            @PathVariable @Positive Long courseId
+            @PathVariable @Positive Long courseId,
+            @RequestParam(required = false) @DecimalMin("-90") @DecimalMax("90") BigDecimal lat,
+            @RequestParam(required = false) @DecimalMin("-180") @DecimalMax("180") BigDecimal lng
     ) {
-        return userCourseQueryService.getDetail(courseId, me == null ? null : me.userId());
+        return userCourseQueryService.getDetail(courseId, me == null ? null : me.userId(), lat, lng);
     }
 }

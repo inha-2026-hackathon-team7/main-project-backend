@@ -3,7 +3,10 @@ package com.hackathonteam7.mainprojectbackend.course;
 import com.hackathonteam7.mainprojectbackend.common.error.ApiException;
 import com.hackathonteam7.mainprojectbackend.common.error.ErrorCode;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse.EnrollmentCourseSummary;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.EnrollmentProgressResponse.EnrollmentPlaceItem;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCoursePlaceItem;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseRewardDetail;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -27,13 +30,17 @@ public class EnrollmentQueryService {
         List<UserCoursePlaceItem> places = coursePlaceRepository
                 .findUserPlaceItemsByCourseId(enrollment.getCourse().getId());
         List<Long> stampedIds = courseStampRepository.findStampedCoursePlaceIds(enrollmentId);
+        Set<Long> stamped = new HashSet<>(stampedIds);
 
         return new EnrollmentProgressResponse(
                 enrollment.getStatus().name().toLowerCase(Locale.ROOT),
                 stampedIds,
                 places.size(),
                 findNextPlace(enrollment, places, stampedIds),
-                enrollment.getCompletedAt()
+                enrollment.getCompletedAt(),
+                EnrollmentCourseSummary.from(enrollment.getCourse()),
+                places.stream().map(place -> EnrollmentPlaceItem.from(place, stamped.contains(place.coursePlaceId()))).toList(),
+                UserCourseRewardDetail.from(enrollment.getCourse().getReward())
         );
     }
 

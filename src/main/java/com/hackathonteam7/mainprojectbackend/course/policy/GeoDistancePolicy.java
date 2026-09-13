@@ -23,7 +23,7 @@ public class GeoDistancePolicy {
         }
     }
 
-    double distanceMeters(
+    public double distanceMeters(
             BigDecimal firstLatitude,
             BigDecimal firstLongitude,
             BigDecimal secondLatitude,

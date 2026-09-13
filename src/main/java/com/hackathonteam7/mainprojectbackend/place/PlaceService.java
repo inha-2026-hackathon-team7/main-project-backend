@@ -51,6 +51,7 @@ public class PlaceService {
                         .latitude(request.latitude())
                         .longitude(request.longitude())
                         .category(request.category())
+                        .description(request.description())
                         .imageUrl(request.imageUrl())
                         .qrcodeString(UUID.randomUUID().toString())
                         .build()
@@ -67,7 +68,8 @@ public class PlaceService {
     @Transactional
     public PlaceResponse update(Long orgId, Long id, PlaceUpdateRequest request) {
         Place place = getOwned(orgId, id);
-        place.update(request.name(), request.latitude(), request.longitude(), request.category(), request.imageUrl());
+        place.update(request.name(), request.latitude(), request.longitude(), request.category(),
+                request.description(), request.imageUrl());
         return PlaceResponse.from(place);
     }
 

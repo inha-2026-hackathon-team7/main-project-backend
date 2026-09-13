@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RewardClaimRepository extends JpaRepository<RewardClaim, Long> {
 
-    @EntityGraph(attributePaths = "reward")
+    @EntityGraph(attributePaths = {"reward", "courseEnrollment.course"})
     List<RewardClaim> findAllByUserIdOrderByClaimedAtDescIdDesc(Long userId);
 
     @EntityGraph(attributePaths = "reward")

@@ -12,6 +12,7 @@ public record PlaceCreateRequest(
         @NotNull @DecimalMin("-90") @DecimalMax("90") BigDecimal latitude,
         @NotNull @DecimalMin("-180") @DecimalMax("180") BigDecimal longitude,
         String category,
+        String description,
         String imageUrl
 ) {
 }

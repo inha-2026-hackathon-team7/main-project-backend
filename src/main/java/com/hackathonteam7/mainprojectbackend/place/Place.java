@@ -53,6 +53,9 @@ public class Place extends BaseTimeEntity {
     @Column(length = 50)
     private String category;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "image_url", length = 255)
     private String imageUrl;
 
@@ -62,22 +65,25 @@ public class Place extends BaseTimeEntity {
 
     @Builder
     private Place(Region region, Organization organization, String name, BigDecimal latitude,
-                   BigDecimal longitude, String category, String imageUrl, String qrcodeString) {
+                   BigDecimal longitude, String category, String description, String imageUrl, String qrcodeString) {
         this.region = region;
         this.organization = organization;
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
         this.category = category;
+        this.description = description;
         this.imageUrl = imageUrl;
         this.qrcodeString = qrcodeString;
     }
 
-    public void update(String name, BigDecimal latitude, BigDecimal longitude, String category, String imageUrl) {
+    public void update(String name, BigDecimal latitude, BigDecimal longitude, String category,
+                        String description, String imageUrl) {
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
         this.category = category;
+        this.description = description;
         this.imageUrl = imageUrl;
     }
 }

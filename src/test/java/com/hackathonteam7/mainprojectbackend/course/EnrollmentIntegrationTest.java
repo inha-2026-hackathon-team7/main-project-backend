@@ -75,7 +75,12 @@ class EnrollmentIntegrationTest extends IntegrationTestSupport {
                 .andExpect(jsonPath("$.total_places").value(2))
                 .andExpect(jsonPath("$.next_place.course_place_id").value(firstCoursePlace.getId()))
                 .andExpect(jsonPath("$.next_place.visit_order").value(1))
-                .andExpect(jsonPath("$.completed_at").doesNotExist());
+                .andExpect(jsonPath("$.completed_at").doesNotExist())
+                .andExpect(jsonPath("$.course.id").value(course.getId()))
+                .andExpect(jsonPath("$.course.name").value("참가 테스트 코스"))
+                .andExpect(jsonPath("$.places", org.hamcrest.Matchers.hasSize(2)))
+                .andExpect(jsonPath("$.places[0].stamped").value(false))
+                .andExpect(jsonPath("$.reward").doesNotExist());
 
         CourseEnrollment enrollment = courseEnrollmentRepository.findById(enrollmentId).orElseThrow();
         courseStampRepository.save(CourseStamp.builder()
@@ -87,7 +92,9 @@ class EnrollmentIntegrationTest extends IntegrationTestSupport {
                         .header("Authorization", "Bearer " + participantToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stamped_course_place_ids[0]").value(firstCoursePlace.getId()))
-                .andExpect(jsonPath("$.next_place.course_place_id").value(secondCoursePlace.getId()));
+                .andExpect(jsonPath("$.next_place.course_place_id").value(secondCoursePlace.getId()))
+                .andExpect(jsonPath("$.places[0].stamped").value(true))
+                .andExpect(jsonPath("$.places[1].stamped").value(false));
 
         mockMvc.perform(get("/enrollments/{enrollmentId}", enrollmentId)
                         .header("Authorization", "Bearer " + otherToken))

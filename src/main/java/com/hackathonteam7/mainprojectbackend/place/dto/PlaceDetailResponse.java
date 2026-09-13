@@ -13,6 +13,7 @@ public record PlaceDetailResponse(
         BigDecimal latitude,
         BigDecimal longitude,
         String category,
+        String description,
         String imageUrl,
         String qrcodeString,
         List<CourseRef> referencingCourses
@@ -31,6 +32,7 @@ public record PlaceDetailResponse(
                 place.getLatitude(),
                 place.getLongitude(),
                 place.getCategory(),
+                place.getDescription(),
                 place.getImageUrl(),
                 place.getQrcodeString(),
                 referencingCourses.stream().map(CourseRef::from).toList()

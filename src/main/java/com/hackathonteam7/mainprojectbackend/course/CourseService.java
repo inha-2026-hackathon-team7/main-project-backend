@@ -174,7 +174,7 @@ public class CourseService {
 
     public List<CoursePendingItem> pending(Long orgId, CourseType type) {
         List<CourseType> types = type != null ? List.of(type) : List.of(CourseType.USER, CourseType.AI);
-        return courseRepository.findAllByOrganizationIdAndStatusAndTypeInOrderByCreatedAtDesc(orgId, CourseStatus.DRAFT, types)
+        return courseRepository.findPendingReview(orgId, types)
                 .stream()
                 .map(course -> new CoursePendingItem(
                         course.getId(),
@@ -209,6 +209,7 @@ public class CourseService {
     public void reject(Long orgId, Long id, Long reviewerUserId, CourseRejectRequest request) {
         Course course = getOwned(orgId, id);
         ensureNotAlreadyReviewed(id);
+        course.changeStatus(CourseStatus.ARCHIVED);
 
         courseReviewRepository.save(
                 CourseReview.builder()

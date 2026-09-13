@@ -2,6 +2,7 @@ package com.hackathonteam7.mainprojectbackend.course;
 
 import com.hackathonteam7.mainprojectbackend.common.error.GlobalExceptionHandler;
 import com.hackathonteam7.mainprojectbackend.config.SecurityConfig;
+import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseCreateRequest;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseDetailResponse;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCourseListItem;
 import com.hackathonteam7.mainprojectbackend.course.dto.user.UserCoursePlaceItem;
@@ -17,12 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -39,6 +42,7 @@ class UserCourseWebTest {
     @Autowired ObjectMapper objectMapper;
     @Autowired JwtTokenProvider jwtTokenProvider;
     @MockitoBean UserCourseQueryService service;
+    @MockitoBean UserCourseCommandService commandService;
 
     @Test
     void anonymousListReturnsOnlySpecifiedFieldsAndForwardsFilters() throws Exception {
@@ -127,6 +131,46 @@ class UserCourseWebTest {
         mockMvc.perform(post("/courses/7/enrollments"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    void unauthenticatedCreateIsRejected() throws Exception {
+        mockMvc.perform(post("/courses")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new UserCourseCreateRequest(1L, "코스", null, List.of(1L, 2L)))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+        verifyNoInteractions(commandService);
+    }
+
+    @Test
+    void authenticatedCreatePassesUserIdAndReturnsCreatedCourse() throws Exception {
+        String token = jwtTokenProvider.generateAccessToken(42L, "user@example.com", Role.USER, null);
+        when(commandService.create(eq(42L), any())).thenReturn(detail(null));
+
+        mockMvc.perform(post("/courses")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new UserCourseCreateRequest(1L, "성수 코스", "설명", List.of(11L, 12L)))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(7));
+        verify(commandService).create(eq(42L), any());
+    }
+
+    @Test
+    void createWithFewerThanTwoPlacesFailsValidation() throws Exception {
+        String token = jwtTokenProvider.generateAccessToken(42L, "user@example.com", Role.USER, null);
+
+        mockMvc.perform(post("/courses")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new UserCourseCreateRequest(1L, "성수 코스", null, List.of(11L)))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"));
+        verifyNoInteractions(commandService);
     }
 
     private UserCourseDetailResponse detail(Long enrollmentId) {

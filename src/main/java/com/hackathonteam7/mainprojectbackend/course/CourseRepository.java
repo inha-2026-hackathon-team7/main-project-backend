@@ -36,8 +36,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     long countByRewardId(Long rewardId);
 
     @EntityGraph(attributePaths = "creator")
-    List<Course> findAllByOrganizationIdAndStatusAndTypeInOrderByCreatedAtDesc(
-            Long organizationId, CourseStatus status, List<CourseType> types);
+    @Query("""
+            select c from Course c
+            where c.organization.id = :organizationId
+              and c.type in :types
+              and not exists (select 1 from CourseReview cr where cr.course = c)
+            order by c.createdAt desc
+            """)
+    List<Course> findPendingReview(@Param("organizationId") Long organizationId, @Param("types") List<CourseType> types);
 
     @Query("""
             select new com.hackathonteam7.mainprojectbackend.course.dto.CourseListRow(

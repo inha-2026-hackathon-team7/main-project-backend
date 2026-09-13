@@ -1,6 +1,8 @@
 package com.hackathonteam7.mainprojectbackend.course;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -136,6 +138,32 @@ class CourseControllerTest extends IntegrationTestSupport {
                         .content("{}"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("ALREADY_REVIEWED"));
+    }
+
+    @Test
+    void reject_archivesTheCourse() throws Exception {
+        Course course = courseRepository.save(Course.builder()
+                .organization(organization).name("검수 대상").type(CourseType.USER).status(CourseStatus.PUBLISHED).isOrdered(true).build());
+
+        mockMvc.perform(post("/admin/courses/{id}/reject", course.getId())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
+
+        assertThat(courseRepository.findById(course.getId()).orElseThrow().getStatus())
+                .isEqualTo(CourseStatus.ARCHIVED);
+    }
+
+    @Test
+    void pending_returnsAlreadyPublishedUnreviewedUserCourse() throws Exception {
+        Course course = courseRepository.save(Course.builder()
+                .organization(organization).name("사용자 제작 코스").type(CourseType.USER).status(CourseStatus.PUBLISHED).isOrdered(true).build());
+
+        mockMvc.perform(get("/admin/courses/pending").param("type", "USER")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(course.getId()));
     }
 
     @Test

@@ -53,4 +53,50 @@ class OrganizationControllerTest extends IntegrationTestSupport {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("ORGANIZATION_NOT_FOUND"));
     }
+
+    @Test
+    void listRegions_returnsRegionsWithPlaceCount() throws Exception {
+        Region region = regionRepository.save(Region.builder().organization(organization).name("성수").type("도심").build());
+        placeRepository.save(Place.builder()
+                .region(region).organization(organization).name("장소")
+                .latitude(new BigDecimal("37.1")).longitude(new BigDecimal("127.1"))
+                .qrcodeString(UUID.randomUUID().toString()).build());
+
+        mockMvc.perform(get("/organizations/{id}/regions", organization.getId())
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(region.getId()))
+                .andExpect(jsonPath("$[0].name").value("성수"))
+                .andExpect(jsonPath("$[0].type").value("도심"))
+                .andExpect(jsonPath("$[0].place_count").value(1));
+    }
+
+    @Test
+    void listRegions_unknownOrganization_returns404() throws Exception {
+        mockMvc.perform(get("/organizations/{id}/regions", 999_999L)
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("ORGANIZATION_NOT_FOUND"));
+    }
+
+    @Test
+    void listPlaces_filteredByRegion_onlyReturnsThatRegionsPlaces() throws Exception {
+        Region regionA = regionRepository.save(Region.builder().organization(organization).name("성수").build());
+        Region regionB = regionRepository.save(Region.builder().organization(organization).name("홍대").build());
+        Place placeA = placeRepository.save(Place.builder()
+                .region(regionA).organization(organization).name("성수 장소")
+                .latitude(new BigDecimal("37.1")).longitude(new BigDecimal("127.1"))
+                .qrcodeString(UUID.randomUUID().toString()).build());
+        placeRepository.save(Place.builder()
+                .region(regionB).organization(organization).name("홍대 장소")
+                .latitude(new BigDecimal("37.2")).longitude(new BigDecimal("127.2"))
+                .qrcodeString(UUID.randomUUID().toString()).build());
+
+        mockMvc.perform(get("/organizations/{id}/places", organization.getId())
+                        .param("region_id", String.valueOf(regionA.getId()))
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(placeA.getId()));
+    }
 }

@@ -27,7 +27,9 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
                 p.latitude, p.longitude, r.id, r.name)
             from Place p join p.region r
             where p.organization.id = :organizationId
+              and (:regionId is null or r.id = :regionId)
             order by p.id
             """)
-    List<PublicPlaceItem> findPublicItemsByOrganizationId(@Param("organizationId") Long organizationId);
+    List<PublicPlaceItem> findPublicItemsByOrganizationId(
+            @Param("organizationId") Long organizationId, @Param("regionId") Long regionId);
 }

@@ -1,5 +1,6 @@
 package com.hackathonteam7.mainprojectbackend.region;
 
+import com.hackathonteam7.mainprojectbackend.region.dto.PublicRegionItem;
 import com.hackathonteam7.mainprojectbackend.region.dto.RegionSummary;
 import java.util.List;
 import java.util.Optional;
@@ -19,4 +20,12 @@ public interface RegionRepository extends JpaRepository<Region, Long> {
             from Region r where r.organization.id = :orgId order by r.id
             """)
     List<RegionSummary> findSummaries(@Param("orgId") Long orgId);
+
+    @Query("""
+            select new com.hackathonteam7.mainprojectbackend.region.dto.PublicRegionItem(
+                r.id, r.name, r.type,
+                (select count(p) from Place p where p.region = r))
+            from Region r where r.organization.id = :organizationId order by r.id
+            """)
+    List<PublicRegionItem> findPublicItemsByOrganizationId(@Param("organizationId") Long organizationId);
 }

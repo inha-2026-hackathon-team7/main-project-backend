@@ -5,6 +5,8 @@ import com.hackathonteam7.mainprojectbackend.common.error.ErrorCode;
 import com.hackathonteam7.mainprojectbackend.organization.dto.OrganizationListItem;
 import com.hackathonteam7.mainprojectbackend.place.PlaceRepository;
 import com.hackathonteam7.mainprojectbackend.place.dto.PublicPlaceItem;
+import com.hackathonteam7.mainprojectbackend.region.RegionRepository;
+import com.hackathonteam7.mainprojectbackend.region.dto.PublicRegionItem;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,15 +19,23 @@ public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final PlaceRepository placeRepository;
+    private final RegionRepository regionRepository;
 
     public List<OrganizationListItem> list() {
         return organizationRepository.findAll().stream().map(OrganizationListItem::from).toList();
     }
 
-    public List<PublicPlaceItem> listPlaces(Long organizationId) {
+    public List<PublicRegionItem> listRegions(Long organizationId) {
         if (!organizationRepository.existsById(organizationId)) {
             throw new ApiException(ErrorCode.ORGANIZATION_NOT_FOUND);
         }
-        return placeRepository.findPublicItemsByOrganizationId(organizationId);
+        return regionRepository.findPublicItemsByOrganizationId(organizationId);
+    }
+
+    public List<PublicPlaceItem> listPlaces(Long organizationId, Long regionId) {
+        if (!organizationRepository.existsById(organizationId)) {
+            throw new ApiException(ErrorCode.ORGANIZATION_NOT_FOUND);
+        }
+        return placeRepository.findPublicItemsByOrganizationId(organizationId, regionId);
     }
 }
